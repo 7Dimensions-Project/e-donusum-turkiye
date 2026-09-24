@@ -74,13 +74,21 @@ class TestAnswerFlow(TransactionCase):
             move._sd_send_answer("RED", "tekrar")
 
     def test_provider_error_is_logged_and_raised(self):
+        """Hata kullanıcıya yansır ve günlüğe bağımsız imleçle yazılır.
+
+        Bağımsız imleçte yazılan kayıt bu testin imlecinden görünmez; bu yüzden
+        kaydın kendisi değil, doğru argümanlarla yazıldığı doğrulanır.
+        """
         move = self._make_inbound(uuid="uuid-5")
-        with patch(SEND_ANSWER, side_effect=EDonusumError("403 reddedildi", 403)):
+        log_model = self.env["sd.edonusum.sync.log"].__class__
+        with patch(SEND_ANSWER, side_effect=EDonusumError("403 reddedildi", 403)), \
+             patch.object(log_model, "_record") as record:
             with self.assertRaises(UserError):
                 move.action_sd_answer_accept()
         self.assertEqual(move.sd_answer_status, "pending")
-        log = self.env["sd.edonusum.sync.log"].search([("move_id", "=", move.id)], limit=1)
-        self.assertEqual(log.state, "error")
+        record.assert_called_once()
+        self.assertEqual(record.call_args.args[2], "error")
+        self.assertTrue(record.call_args.kwargs["independent"])
 
     # 3) erişim: yetkisiz kullanıcı entegratör ayarını değiştiremez
     def test_backend_write_requires_manager(self):

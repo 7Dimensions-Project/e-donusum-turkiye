@@ -143,8 +143,10 @@ class AccountMove(models.Model):
         try:
             result = backend.get_provider().send_answer(self.l10n_tr_nilvera_uuid, answer, reason)
         except EDonusumError as exc:
+            # independent: UserError isteği geri alır, günlük kaydı da silinirdi
             Log._record(backend, "send_answer", "error", str(exc), move=self,
-                        document_uuid=self.l10n_tr_nilvera_uuid, payload=exc.payload or "")
+                        document_uuid=self.l10n_tr_nilvera_uuid, payload=exc.payload or "",
+                        independent=True)
             raise UserError(_("Uygulama yanıtı gönderilemedi: %s", exc)) from exc
 
         status = "accepted" if answer == ANSWER_ACCEPT else "rejected"

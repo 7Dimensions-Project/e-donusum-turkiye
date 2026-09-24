@@ -29,10 +29,9 @@
                 <field name="move_id"/>
                 <filter name="errors" string="Hatalar" domain="[('state', '=', 'error')]"/>
                 <filter name="retry" string="Yeniden Denenecek" domain="[('state', '=', 'retry')]"/>
-                <group expand="0" string="Grupla">
-                    <filter name="group_operation" string="İşlem" context="{'group_by': 'operation'}"/>
-                    <filter name="group_provider" string="Entegratör" context="{'group_by': 'provider'}"/>
-                </group>
+                <separator/>
+                <filter name="group_operation" string="İşlem" context="{'group_by': 'operation'}"/>
+                <filter name="group_provider" string="Entegratör" context="{'group_by': 'provider'}"/>
             </search>
         </field>
     </record>
