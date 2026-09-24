@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_company_form_inherit_edonusum" model="ir.ui.view">
+        <field name="name">res.company.form.inherit.edonusum</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="E-Dönüşüm (Nilvera)" name="nilvera_config">
+                    <group>
+                        <group string="Nilvera API Bağlantı Ayarları">
+                            <field name="nilvera_api_key" password="True"/>
+                            <field name="nilvera_environment" widget="radio"/>
+                            <button name="action_test_nilvera_connection" string="Bağlantıyı Test Et" type="object" class="btn-info" icon="fa-plug"/>
+                        </group>
+                        <group string="Otomasyon &amp; Yasal Ayarlar">
+                            <field name="nilvera_auto_sync"/>
+                            <field name="nilvera_auto_accept_days"/>
+                            <field name="nilvera_last_sync_date"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

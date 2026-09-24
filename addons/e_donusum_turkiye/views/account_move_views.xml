@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Form View Extension -->
+    <record id="view_move_form_inherit_edonusum" model="ir.ui.view">
+        <field name="name">account.move.form.inherit.edonusum</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <!-- Header Action Buttons -->
+            <xpath expr="//header" position="inside">
+                <button name="action_gib_accept" string="⚡ e-Fatura: Kabul Et (GİB)" type="object" class="btn-success"
+                        invisible="move_type != 'in_invoice' or x_edonusum_status not in ('waiting', 'draft') or 'TEMEL' in (x_edonusum_profile or '')"/>
+                <button name="action_gib_reject" string="❌ e-Fatura: Reddet (GİB)" type="object" class="btn-danger"
+                        invisible="move_type != 'in_invoice' or x_edonusum_status not in ('waiting', 'draft') or 'TEMEL' in (x_edonusum_profile or '')"/>
+                <button name="action_gib_update_status" string="🔄 GİB / Nilvera Durumunu Güncelle" type="object" class="btn-outline-primary"
+                        invisible="not x_edonusum_uuid and not x_parasut_uuid"/>
+                <button name="action_download_nilvera_pdf" string="📄 PDF İndir" type="object" class="btn-outline-secondary"
+                        invisible="not x_edonusum_uuid and not x_parasut_uuid"/>
+                <button name="action_download_nilvera_xml" string="📦 XML İndir" type="object" class="btn-outline-secondary"
+                        invisible="not x_edonusum_uuid and not x_parasut_uuid"/>
+            </xpath>
+
+            <!-- Statusbar extension -->
+            <xpath expr="//header" position="after">
+                <div class="alert alert-info d-flex align-items-center mb-2" role="alert" invisible="not is_foreign_currency or not x_tl_total">
+                    <i class="fa fa-info-circle me-2 fs-5"></i>
+                    <div>
+                        <strong>Dövizli Fatura Bilgisi: </strong>
+                        <span t-esc="x_tl_rate_text"/> | 
+                        <strong>TL Matrah:</strong> <field name="x_tl_untaxed" class="oe_inline"/> | 
+                        <strong>TL Vergi:</strong> <field name="x_tl_tax" class="oe_inline"/> | 
+                        <strong>TL Toplam:</strong> <field name="x_tl_total" class="oe_inline text-primary fw-bold"/>
+                    </div>
+                </div>
+            </xpath>
+
+            <!-- E-Dönüşüm Notebook Page -->
+            <xpath expr="//notebook" position="inside">
+                <page string="E-Dönüşüm (GİB / Nilvera)" name="edonusum_details">
+                    <group>
+                        <group string="GİB Belge Bilgileri">
+                            <field name="x_edonusum_uuid" readonly="1"/>
+                            <field name="x_edonusum_profile"/>
+                            <field name="x_edonusum_type_code"/>
+                            <field name="x_edonusum_status" widget="badge" 
+                                   decoration-success="x_edonusum_status in ('accepted', 'auto_accepted')"
+                                   decoration-warning="x_edonusum_status == 'waiting'"
+                                   decoration-danger="x_edonusum_status in ('rejected', 'cancelled')"
+                                   decoration-info="x_edonusum_status == 'draft'"/>
+                            <field name="x_edonusum_gib_date"/>
+                        </group>
+                        <group string="GİB Yanıt ve Durum Detayları">
+                            <field name="x_edonusum_answer_status"/>
+                            <field name="x_edonusum_answer_note"/>
+                            <field name="is_foreign_currency" invisible="1"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Tree / List View Extension -->
+    <record id="view_invoice_tree_inherit_edonusum" model="ir.ui.view">
+        <field name="name">account.invoice.tree.inherit.edonusum</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_invoice_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='state']" position="before">
+                <field name="x_edonusum_status" string="GİB Durumu" widget="badge" optional="show"
+                       decoration-success="x_edonusum_status in ('accepted', 'auto_accepted')"
+                       decoration-warning="x_edonusum_status == 'waiting'"
+                       decoration-danger="x_edonusum_status in ('rejected', 'cancelled')"
+                       decoration-info="x_edonusum_status == 'draft'"/>
+                <field name="x_edonusum_profile" string="Senaryo" optional="hide"/>
+                <field name="x_tl_total" string="TL Toplam" optional="show" sum="Toplam TL"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

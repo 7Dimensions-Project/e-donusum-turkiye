@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Tax Groups -->
+    <record id="tax_group_kdv_20" model="account.tax.group">
+        <field name="name">KDV %20</field>
+        <field name="sequence">10</field>
+    </record>
+
+    <record id="tax_group_kdv_10" model="account.tax.group">
+        <field name="name">KDV %10</field>
+        <field name="sequence">11</field>
+    </record>
+
+    <record id="tax_group_kdv_1" model="account.tax.group">
+        <field name="name">KDV %1</field>
+        <field name="sequence">12</field>
+    </record>
+
+    <record id="tax_group_kdv_0" model="account.tax.group">
+        <field name="name">KDV %0 (İstisna)</field>
+        <field name="sequence">13</field>
+    </record>
+
+    <record id="tax_group_tevkifat" model="account.tax.group">
+        <field name="name">KDV Tevkifatı (9015)</field>
+        <field name="sequence">20</field>
+    </record>
+
+    <record id="tax_group_konaklama" model="account.tax.group">
+        <field name="name">Konaklama Vergisi (0059)</field>
+        <field name="sequence">30</field>
+    </record>
+
+    <record id="tax_group_oiv" model="account.tax.group">
+        <field name="name">Özel İletişim Vergisi (ÖİV - 4080)</field>
+        <field name="sequence">40</field>
+    </record>
+
+    <record id="tax_group_stopaj" model="account.tax.group">
+        <field name="name">Stopaj (Gelir/Kurumlar - 0003)</field>
+        <field name="sequence">50</field>
+    </record>
+</odoo>
