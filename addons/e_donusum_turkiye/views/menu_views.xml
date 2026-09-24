@@ -12,7 +12,7 @@
         <field name="name">Gelen e-Faturalar</field>
         <field name="res_model">account.move</field>
         <field name="view_mode">tree,kanban,form</field>
-        <field name="domain">[('move_type', 'in', ('in_invoice', 'in_refund')), '|', ('x_edonusum_uuid', '!=', False), ('x_parasut_uuid', '!=', False)]</field>
+        <field name="domain">[('move_type', 'in', ('in_invoice', 'in_refund')), '|', '|', ('x_edonusum_uuid', '!=', False), ('x_parasut_uuid', '!=', False), ('x_parasut_einvoice_id', '!=', False)]</field>
         <field name="context">{'default_move_type': 'in_invoice'}</field>
     </record>
 
@@ -59,7 +59,7 @@
               sequence="50"/>
 
     <menuitem id="menu_action_fetch_invoices"
-              name="Nilvera'dan Fatura Çek"
+              name="Entegratörden Fatura Çek"
               parent="menu_edonusum_tools"
               action="action_fetch_invoices_wizard"
               sequence="10"/>

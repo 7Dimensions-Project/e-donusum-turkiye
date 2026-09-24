@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo noupdate="1">
     <!-- Hourly sync cron -->
-    <record id="cron_sync_nilvera_invoices" model="ir.cron">
-        <field name="name">Nilvera E-Dönüşüm: Otomatik Fatura Senkronizasyonu</field>
+    <record id="cron_sync_edonusum_invoices" model="ir.cron">
+        <field name="name">E-Dönüşüm Türkiye: Otomatik Fatura Senkronizasyonu</field>
         <field name="model_id" ref="account.model_account_move"/>
         <field name="state">code</field>
-        <field name="code">model.cron_sync_all_nilvera_invoices()</field>
+        <field name="code">model.cron_sync_all_edonusum_invoices()</field>
         <field name="interval_number">1</field>
         <field name="interval_type">hours</field>
         <field name="numbercall">-1</field>
@@ -14,7 +14,7 @@
 
     <!-- 7-day legal auto accept cron -->
     <record id="cron_check_7day_legal_acceptance" model="ir.cron">
-        <field name="name">Nilvera E-Dönüşüm: 7 Günlük Yasal Fatura Onay Takibi (TTK m.21/2)</field>
+        <field name="name">E-Dönüşüm Türkiye: 7 Günlük Yasal Fatura Onay Takibi (TTK m.21/2)</field>
         <field name="model_id" ref="account.model_account_move"/>
         <field name="state">code</field>
         <field name="code">model.cron_check_7day_legal_acceptance()</field>

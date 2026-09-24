@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-res.partner extension for E-Dönüşüm Türkiye.
+res.partner extension for Multi-Integrator E-Dönüşüm Türkiye.
 """
 
 from odoo import models, fields, api, _
@@ -23,22 +23,26 @@ class ResPartner(models.Model):
     )
 
     def action_check_einvoice_taxpayer(self):
-        """Checks partner's taxpayer status via Nilvera API."""
+        """Checks partner's taxpayer status via configured integrator API."""
         self.ensure_one()
         vkn = "".join(filter(str.isdigit, str(self.vat or '')))
         if not vkn or len(vkn) not in (10, 11):
             raise UserError(_("Lütfen carinin 10 haneli VKN veya 11 haneli TCKN numarasını girin."))
 
         company = self.env.company
-        client = company.get_nilvera_client()
+        integrator = company.get_integrator()
         try:
-            res = client.check_taxpayer(vkn)
-            is_user = bool(res and (res.get('IsTaxPayer') or res.get('Status')))
+            res = integrator.check_taxpayer(vkn)
+            is_user = bool(res and res.get('IsTaxPayer'))
             self.write({
                 'x_is_einvoice_user': is_user,
                 'x_einvoice_alias': res.get('Alias') or self.x_einvoice_alias or ''
             })
-            msg = _("Mükellef Durumu: %s") % (_("e-Fatura Kayıtlı") if is_user else _("e-Fatura Kayıtlı Değil (e-Arşiv)"))
+            provider_title = company.edonusum_provider.capitalize()
+            msg = _("%s üzerinden GİB Durumu: %s") % (
+                provider_title,
+                _("e-Fatura Kayıtlısı") if is_user else _("e-Fatura Kayıtlısı Değil (e-Arşiv)")
+            )
             return {
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',

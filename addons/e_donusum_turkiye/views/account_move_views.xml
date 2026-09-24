@@ -12,12 +12,12 @@
                         invisible="move_type != 'in_invoice' or x_edonusum_status not in ('waiting', 'draft') or 'TEMEL' in (x_edonusum_profile or '')"/>
                 <button name="action_gib_reject" string="❌ e-Fatura: Reddet (GİB)" type="object" class="btn-danger"
                         invisible="move_type != 'in_invoice' or x_edonusum_status not in ('waiting', 'draft') or 'TEMEL' in (x_edonusum_profile or '')"/>
-                <button name="action_gib_update_status" string="🔄 GİB / Nilvera Durumunu Güncelle" type="object" class="btn-outline-primary"
-                        invisible="not x_edonusum_uuid and not x_parasut_uuid"/>
-                <button name="action_download_nilvera_pdf" string="📄 PDF İndir" type="object" class="btn-outline-secondary"
-                        invisible="not x_edonusum_uuid and not x_parasut_uuid"/>
-                <button name="action_download_nilvera_xml" string="📦 XML İndir" type="object" class="btn-outline-secondary"
-                        invisible="not x_edonusum_uuid and not x_parasut_uuid"/>
+                <button name="action_gib_update_status" string="🔄 GİB Durumunu Güncelle" type="object" class="btn-outline-primary"
+                        invisible="not x_edonusum_uuid and not x_parasut_uuid and not x_parasut_einvoice_id"/>
+                <button name="action_download_official_pdf" string="📄 PDF İndir" type="object" class="btn-outline-secondary"
+                        invisible="not x_edonusum_uuid and not x_parasut_uuid and not x_parasut_einvoice_id"/>
+                <button name="action_download_official_xml" string="📦 XML İndir" type="object" class="btn-outline-secondary"
+                        invisible="not x_edonusum_uuid and not x_parasut_uuid and not x_parasut_einvoice_id"/>
             </xpath>
 
             <!-- Statusbar extension -->
@@ -36,10 +36,11 @@
 
             <!-- E-Dönüşüm Notebook Page -->
             <xpath expr="//notebook" position="inside">
-                <page string="E-Dönüşüm (GİB / Nilvera)" name="edonusum_details">
+                <page string="E-Dönüşüm Türkiye (GİB)" name="edonusum_details">
                     <group>
                         <group string="GİB Belge Bilgileri">
                             <field name="x_edonusum_uuid" readonly="1"/>
+                            <field name="x_parasut_einvoice_id" readonly="1" invisible="not x_parasut_einvoice_id"/>
                             <field name="x_edonusum_profile"/>
                             <field name="x_edonusum_type_code"/>
                             <field name="x_edonusum_status" widget="badge" 

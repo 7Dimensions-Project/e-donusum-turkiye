@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-account.move extension for E-Dönüşüm Türkiye (Nilvera & GİB).
+account.move extension for Multi-Integrator E-Dönüşüm Türkiye (Nilvera, Paraşüt, Uyumsoft).
 """
 
 import base64
@@ -8,9 +8,7 @@ import logging
 from datetime import datetime, timedelta
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
-from ..tools.nilvera_client import NilveraClient, NilveraAPIError
-from ..tools.ubl_tr_parser import UBLTRParser
-from ..tools.ubl_tax_resolver import UBLTaxResolver
+from ..tools.integrators import BaseIntegrator
 
 logger = logging.getLogger("e_donusum.account_move")
 
@@ -29,6 +27,11 @@ class AccountMove(models.Model):
         string="UUID (Uyumluluk)",
         store=True,
         readonly=False
+    )
+    x_parasut_einvoice_id = fields.Char(
+        string="Paraşüt e-Fatura ID",
+        copy=False,
+        help="Paraşüt API e_invoices tekil ID'si"
     )
     x_edonusum_profile = fields.Selection(
         [
@@ -95,6 +98,11 @@ class AccountMove(models.Model):
         string="Uygulama Yanıtı Notu",
         readonly=True
     )
+    x_parasut_answer_note = fields.Text(
+        related='x_edonusum_answer_note',
+        string="Uygulama Yanıtı Notu (Uyumluluk)",
+        readonly=False
+    )
     x_edonusum_answer_status = fields.Char(
         string="GİB Son Durum Kodu",
         readonly=True
@@ -140,86 +148,95 @@ class AccountMove(models.Model):
                 move.currency_id.id != move.company_id.currency_id.id
             )
 
+    def _get_target_doc_identifier(self):
+        """Returns the appropriate document ID or UUID based on integrator."""
+        provider = self.company_id.edonusum_provider
+        if provider == 'parasut' and self.x_parasut_einvoice_id:
+            return self.x_parasut_einvoice_id
+        return self.x_edonusum_uuid or self.x_parasut_uuid
+
     # -------------------------------------------------------------------------
     # Actions: KABUL, RED, GİB Durumu Güncelle
     # -------------------------------------------------------------------------
 
     def action_gib_accept(self):
-        """Sends KABUL application response to GİB via Nilvera."""
+        """Sends KABUL application response to GİB via configured integrator."""
         self.ensure_one()
-        uuid = self.x_edonusum_uuid or self.x_parasut_uuid
-        if not uuid:
-            raise UserError(_("Bu faturanın E-Dönüşüm UUID değeri bulunamadı."))
+        doc_id = self._get_target_doc_identifier()
+        if not doc_id:
+            raise UserError(_("Bu faturanın E-Dönüşüm Belge / UUID değeri bulunamadı."))
 
         # Check scenario
         profile = (self.x_edonusum_profile or self.x_parasut_profile or '').upper()
         if 'TEMEL' in profile:
             raise UserError(_("Temel Faturalar için GİB mevzuatı gereği KABUL/RED yanıtı gönderilemez."))
 
-        client = self.company_id.get_nilvera_client()
+        integrator = self.company_id.get_integrator()
         try:
-            res = client.send_answer(uuid=uuid, status='KABUL')
+            res = integrator.send_answer(doc_uuid_or_id=doc_id, status='KABUL')
             self.write({
                 'x_edonusum_status': 'accepted',
                 'x_edonusum_answer_note': 'GİB üzerinden kabul edildi.'
             })
-            self.message_post(body=_("⚡ <b>GİB Uygulama Yanıtı:</b> Fatura Nilvera/GİB üzerinden KABUL edildi."))
+            provider_title = self.company_id.edonusum_provider.capitalize()
+            self.message_post(body=_("⚡ <b>GİB Uygulama Yanıtı:</b> Fatura %s/GİB üzerinden başarıyla KABUL edildi.") % provider_title)
             return {
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
                 'params': {
                     'title': _("Fatura Kabul Edildi"),
-                    'message': _("KABUL yanıtı başarıyla GİB'e iletildi."),
+                    'message': _("KABUL yanıtı %s üzerinden GİB'e iletildi.") % provider_title,
                     'type': 'success',
                     'sticky': False,
                 }
             }
-        except NilveraAPIError as ne:
-            raise UserError(_("Nilvera Kabul Hatası: %s") % str(ne))
+        except Exception as e:
+            raise UserError(_("%s Kabul Hatası: %s") % (self.company_id.edonusum_provider.capitalize(), str(e)))
 
     def action_gib_reject(self):
-        """Sends RED application response to GİB via Nilvera."""
+        """Sends RED application response to GİB via configured integrator."""
         self.ensure_one()
-        uuid = self.x_edonusum_uuid or self.x_parasut_uuid
-        if not uuid:
-            raise UserError(_("Bu faturanın E-Dönüşüm UUID değeri bulunamadı."))
+        doc_id = self._get_target_doc_identifier()
+        if not doc_id:
+            raise UserError(_("Bu faturanın E-Dönüşüm Belge / UUID değeri bulunamadı."))
 
         profile = (self.x_edonusum_profile or self.x_parasut_profile or '').upper()
         if 'TEMEL' in profile:
             raise UserError(_("Temel Faturalar için GİB mevzuatı gereği KABUL/RED yanıtı gönderilemez."))
 
-        client = self.company_id.get_nilvera_client()
+        integrator = self.company_id.get_integrator()
         try:
-            res = client.send_answer(uuid=uuid, status='RED', reason='Ticari anlaşmazlık / Hatalı fatura')
+            res = integrator.send_answer(doc_uuid_or_id=doc_id, status='RED', reason='Ticari anlaşmazlık / Hatalı fatura')
             self.write({
                 'x_edonusum_status': 'rejected',
                 'x_edonusum_answer_note': 'GİB üzerinden reddedildi.'
             })
-            self.message_post(body=_("❌ <b>GİB Uygulama Yanıtı:</b> Fatura Nilvera/GİB üzerinden REDDEDİLDİ."))
+            provider_title = self.company_id.edonusum_provider.capitalize()
+            self.message_post(body=_("❌ <b>GİB Uygulama Yanıtı:</b> Fatura %s/GİB üzerinden REDDEDİLDİ.") % provider_title)
             return {
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
                 'params': {
                     'title': _("Fatura Reddedildi"),
-                    'message': _("RED yanıtı başarıyla GİB'e iletildi."),
+                    'message': _("RED yanıtı %s üzerinden GİB'e iletildi.") % provider_title,
                     'type': 'warning',
                     'sticky': False,
                 }
             }
-        except NilveraAPIError as ne:
-            raise UserError(_("Nilvera Red Hatası: %s") % str(ne))
+        except Exception as e:
+            raise UserError(_("%s Red Hatası: %s") % (self.company_id.edonusum_provider.capitalize(), str(e)))
 
     def action_gib_update_status(self):
-        """Queries current status from Nilvera API and synchronizes with Odoo."""
+        """Queries current status from integrator API and synchronizes with Odoo."""
         self.ensure_one()
-        uuid = self.x_edonusum_uuid or self.x_parasut_uuid
-        if not uuid:
-            raise UserError(_("Bu faturanın E-Dönüşüm UUID değeri bulunamadı."))
+        doc_id = self._get_target_doc_identifier()
+        if not doc_id:
+            raise UserError(_("Bu faturanın E-Dönüşüm Belge / UUID değeri bulunamadı."))
 
-        client = self.company_id.get_nilvera_client()
+        integrator = self.company_id.get_integrator()
         try:
-            data = client.get_inbound_invoice_status(uuid)
-            status_text = (data.get('Status') or data.get('InvoiceStatus') or '').upper()
+            data = integrator.get_inbound_invoice_status(doc_id)
+            status_text = (data.get('Status') or '').upper()
             answer_status = (data.get('AnswerStatus') or '').upper()
             answer_note = data.get('AnswerNote') or ''
 
@@ -238,9 +255,10 @@ class AccountMove(models.Model):
 
             if vals:
                 self.write(vals)
+                provider_title = self.company_id.edonusum_provider.capitalize()
                 self.message_post(body=_(
-                    "🔄 <b>Nilvera Durumu Güncellendi:</b> %s | Uygulama Yanıtı: %s"
-                ) % (status_text, answer_status or "Bekliyor"))
+                    "🔄 <b>%s Durumu Güncellendi:</b> %s | Uygulama Yanıtı: %s"
+                ) % (provider_title, status_text, answer_status or "Bekliyor"))
 
             return {
                 'type': 'ir.actions.client',
@@ -255,17 +273,17 @@ class AccountMove(models.Model):
         except Exception as e:
             raise UserError(_("Durum sorgulama hatası: %s") % str(e))
 
-    def action_download_nilvera_pdf(self):
+    def action_download_official_pdf(self):
         """Downloads official PDF visual and attaches to the record."""
         self.ensure_one()
-        uuid = self.x_edonusum_uuid or self.x_parasut_uuid
-        if not uuid:
-            raise UserError(_("Fatura UUID değeri bulunamadı."))
+        doc_id = self._get_target_doc_identifier()
+        if not doc_id:
+            raise UserError(_("Fatura Belge / UUID değeri bulunamadı."))
 
-        client = self.company_id.get_nilvera_client()
-        pdf_bytes = client.get_inbound_invoice_pdf(uuid)
+        integrator = self.company_id.get_integrator()
+        pdf_bytes = integrator.get_inbound_invoice_pdf(doc_id)
         attachment = self.env['ir.attachment'].create({
-            'name': f"{self.name or uuid}.pdf",
+            'name': f"{self.name or doc_id}.pdf",
             'type': 'binary',
             'datas': base64.b64encode(pdf_bytes),
             'res_model': 'account.move',
@@ -275,17 +293,17 @@ class AccountMove(models.Model):
         self.message_post(body=_("📄 Resmi e-Fatura görseli PDF olarak eklendi."), attachment_ids=[attachment.id])
         return True
 
-    def action_download_nilvera_xml(self):
+    def action_download_official_xml(self):
         """Downloads signed UBL-TR XML and attaches to the record."""
         self.ensure_one()
-        uuid = self.x_edonusum_uuid or self.x_parasut_uuid
-        if not uuid:
-            raise UserError(_("Fatura UUID değeri bulunamadı."))
+        doc_id = self._get_target_doc_identifier()
+        if not doc_id:
+            raise UserError(_("Fatura Belge / UUID değeri bulunamadı."))
 
-        client = self.company_id.get_nilvera_client()
-        xml_bytes = client.get_inbound_invoice_xml(uuid)
+        integrator = self.company_id.get_integrator()
+        xml_bytes = integrator.get_inbound_invoice_xml(doc_id)
         attachment = self.env['ir.attachment'].create({
-            'name': f"{self.name or uuid}.xml",
+            'name': f"{self.name or doc_id}.xml",
             'type': 'binary',
             'datas': base64.b64encode(xml_bytes),
             'res_model': 'account.move',
@@ -295,22 +313,33 @@ class AccountMove(models.Model):
         self.message_post(body=_("📦 İmzalı UBL-TR XML dosyası eklendi."), attachment_ids=[attachment.id])
         return True
 
+    # Backwards compatibility methods
+    def action_download_nilvera_pdf(self):
+        return self.action_download_official_pdf()
+
+    def action_download_nilvera_xml(self):
+        return self.action_download_official_xml()
+
     # -------------------------------------------------------------------------
     # Cron Jobs
     # -------------------------------------------------------------------------
 
     @api.model
-    def cron_sync_all_nilvera_invoices(self):
+    def cron_sync_all_edonusum_invoices(self):
         """Scheduled action: Polls new inbound invoices for all active companies."""
         companies = self.env['res.company'].search([
-            ('nilvera_api_key', '!=', False),
-            ('nilvera_auto_sync', '=', True)
+            ('edonusum_auto_sync', '=', True)
         ])
         for comp in companies:
             try:
-                comp.with_user(1)._sync_company_nilvera_invoices()
+                wizard = self.env['fetch.invoices.wizard'].with_company(comp).create({
+                    'company_id': comp.id,
+                    'date_start': fields.Date.today() - timedelta(days=2),
+                    'date_end': fields.Date.today()
+                })
+                wizard.action_fetch_invoices()
             except Exception as e:
-                logger.error("Error syncing Nilvera for company %s: %s", comp.name, e)
+                logger.error("Error syncing E-Donusum for company %s: %s", comp.name, e)
 
     @api.model
     def cron_check_7day_legal_acceptance(self):
