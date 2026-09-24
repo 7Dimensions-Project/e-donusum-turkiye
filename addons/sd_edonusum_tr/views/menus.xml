@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Ayrı bir uygulama açılmaz; her şey Muhasebe altındadır. -->
+    <menuitem id="menu_sd_edonusum_root" name="E-Dönüşüm TR"
+              parent="account.menu_finance" sequence="90"
+              groups="sd_edonusum_tr.group_sd_edonusum_user"/>
+
+    <menuitem id="menu_sd_edonusum_pending" name="Yanıt Bekleyen Faturalar"
+              parent="menu_sd_edonusum_root" action="sd_edonusum_pending_answer_action" sequence="10"/>
+
+    <menuitem id="menu_sd_edonusum_log" name="İşlem Günlüğü"
+              parent="menu_sd_edonusum_root" action="sd_edonusum_sync_log_action" sequence="20"/>
+
+    <menuitem id="menu_sd_edonusum_backend" name="Entegratör Bağlantıları"
+              parent="menu_sd_edonusum_root" action="sd_edonusum_backend_action" sequence="30"
+              groups="sd_edonusum_tr.group_sd_edonusum_manager"/>
+</odoo>

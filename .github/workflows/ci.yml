@@ -1,0 +1,113 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint ve Odoo 19 uyumluluk
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: ruff kur
+        run: pip install --quiet ruff
+
+      - name: ruff (yeni modül + araçlar)
+        run: ruff check addons/sd_edonusum_tr tools
+
+      - name: Odoo 19 uyumluluk denetimi
+        run: python tools/check_odoo19.py addons/sd_edonusum_tr
+
+  test:
+    name: Odoo 19 kurulum ve testler
+    runs-on: ubuntu-latest
+    needs: lint
+    services:
+      db:
+        image: postgres:15
+        env:
+          POSTGRES_USER: odoo
+          POSTGRES_PASSWORD: odoo
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U odoo"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: odoo:19.0 imajını çek
+        run: docker pull --quiet odoo:19.0
+
+      # odoo imajının entrypoint'i HOST/USER/PASSWORD ortam değişkenlerinden veritabanı
+      # argümanlarını üretir ve komutun SONUNA ekler; bu yüzden --db_host bayrağı ezilir.
+      # Bağlantı bilgileri env ile verilmeli.
+      - name: Modülü kur ve testleri çalıştır
+        run: |
+          set -o pipefail
+          docker run --rm --network host \
+            -e HOST=127.0.0.1 -e PORT=5432 -e USER=odoo -e PASSWORD=odoo \
+            -v "$PWD/addons:/mnt/extra-addons/addons:ro" \
+            odoo:19.0 \
+            odoo -d ci -i sd_edonusum_tr \
+              --addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons/addons \
+              --test-enable --test-tags /sd_edonusum_tr \
+              --stop-after-init --workers=0 --log-level=test \
+              --data-dir=/tmp/odoo \
+            2>&1 | tee odoo-test.log
+
+      - name: Test özeti
+        if: always()
+        run: |
+          echo "### Odoo 19 test sonucu" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          grep -E "odoo\.tests\.result|FAIL:|ERROR:" odoo-test.log | tail -20 >> "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Hata bağlamı
+        if: failure()
+        run: grep -nE "Traceback|FAIL:|ERROR:|ParseError" -A 25 odoo-test.log | head -150
+
+      - name: Log artefaktı
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: odoo-test-log
+          path: odoo-test.log
+          if-no-files-found: ignore
+
+  legacy:
+    name: Eski modül durumu (bilgi amaçlı)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # addons/e_donusum_turkiye şu an Odoo 19'da kurulmuyor (res.groups.category_id,
+      # view_mode="tree" vb.). Bu iş bilinçli olarak PR'ı bloke etmez; bulguları
+      # iş özetine yazar ki durum görünür kalsın.
+      - name: Odoo 19 uyumluluk denetimi (raporlayıcı)
+        run: |
+          {
+            echo "### Eski modül: addons/e_donusum_turkiye"
+            echo '```'
+            python tools/check_odoo19.py addons/e_donusum_turkiye || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -41,3 +41,7 @@ desktop.ini
 local_config.py
 scratch/
 temp/
+
+# Lokal test ortamı
+docker-compose.yml
+odoo-test.log
