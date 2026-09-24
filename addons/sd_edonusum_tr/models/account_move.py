@@ -18,7 +18,7 @@ from dateutil.relativedelta import relativedelta
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
-from ..services import ANSWER_ACCEPT, ANSWER_REJECT, EDonusumError, EDonusumRetryableError
+from ..services import ANSWER_ACCEPT, EDonusumError, EDonusumRetryableError
 
 _logger = logging.getLogger(__name__)
 

@@ -1,0 +1,26 @@
+# Odoo 19 / Python 3.12. Yalnız yeni modül ve araçlar denetlenir (CI'da yol verilir).
+target-version = "py312"
+line-length = 120
+extend-exclude = [".git", "__pycache__", "odoo_online_bridge"]
+
+[lint]
+select = ["E", "F", "W", "I", "B", "UP", "C4", "T20"]
+ignore = [
+  "E501",   # satır uzunluğu formatter'ın işi
+  "B904",   # `raise ... from` — Odoo'da UserError zincirlemesi her zaman istenmez
+]
+
+[lint.per-file-ignores]
+# Odoo modüllerinde __init__.py yalnız alt paketleri içe aktarır
+"__init__.py" = ["F401"]
+"*/tests/*" = ["S101"]
+# Manifest, tek bir sözlük literalidir (ruff bunu "işe yaramaz ifade" sanar)
+"__manifest__.py" = ["B018"]
+# CLI denetim aracı çıktısını print ile verir
+"tools/check_odoo19.py" = ["T201"]
+
+[lint.isort]
+known-first-party = ["odoo"]
+
+[format]
+quote-style = "double"

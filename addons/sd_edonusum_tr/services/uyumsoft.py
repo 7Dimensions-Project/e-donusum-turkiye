@@ -53,7 +53,7 @@ class UyumsoftProvider(EDonusumProvider):
             f"<wsse:Password>{_escape(backend.uyumsoft_password)}</wsse:Password>"
             "</wsse:UsernameToken></wsse:Security></s:Header>"
             f"<s:Body><u:{operation}>{body_xml}</u:{operation}></s:Body></s:Envelope>"
-        ).encode("utf-8")
+        ).encode()
 
     def _call(self, operation: str, body_xml: str = ""):
         headers = {

@@ -1,9 +1,8 @@
 from unittest.mock import MagicMock, patch
 
-from odoo.tests import TransactionCase, tagged
-
 from odoo.addons.sd_edonusum_tr.services import get_provider
 from odoo.addons.sd_edonusum_tr.services.base import EDonusumError, EDonusumProvider, EDonusumRetryableError
+from odoo.tests import TransactionCase, tagged
 
 
 @tagged("post_install", "-at_install")
@@ -72,9 +71,9 @@ class TestProviders(TransactionCase):
     def test_uyumsoft_soap_fault_raises(self):
         backend = self._backend("uyumsoft", uyumsoft_username="u", uyumsoft_password="p")
         fault = (
-            '<?xml version="1.0"?><s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">'
-            "<s:Body><s:Fault><faultstring>Yetkisiz</faultstring></s:Fault></s:Body></s:Envelope>"
-        ).encode()
+            b'<?xml version="1.0"?><s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">'
+            b"<s:Body><s:Fault><faultstring>Yetkisiz</faultstring></s:Fault></s:Body></s:Envelope>"
+        )
         with patch("odoo.addons.sd_edonusum_tr.services.uyumsoft.requests.post",
                    return_value=MagicMock(status_code=200, content=fault)):
             with self.assertRaises(EDonusumError):

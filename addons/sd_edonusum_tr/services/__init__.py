@@ -1,7 +1,4 @@
-from . import base
-from . import nilvera
-from . import parasut
-from . import uyumsoft
+from . import base, nilvera, parasut, uyumsoft
 from .base import (
     ANSWER_ACCEPT,
     ANSWER_REJECT,

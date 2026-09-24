@@ -1,10 +1,9 @@
 from unittest.mock import patch
 
 from odoo import fields
+from odoo.addons.sd_edonusum_tr.services.base import EDonusumError
 from odoo.exceptions import AccessError, UserError
 from odoo.tests import TransactionCase, tagged
-
-from odoo.addons.sd_edonusum_tr.services.base import EDonusumError
 
 SEND_ANSWER = "odoo.addons.sd_edonusum_tr.services.nilvera.NilveraProvider.send_answer"
 GET_STATUS = "odoo.addons.sd_edonusum_tr.services.nilvera.NilveraProvider.get_status"
