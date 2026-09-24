@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
-    'name': 'E-Dönüşüm Türkiye (Nilvera, Paraşüt, Uyumsoft)',
-    'version': '1.0.0',
+    'name': 'E-Dönüşüm Türkiye (KULLANIMDAN KALDIRILDI — bkz. sd_edonusum_tr)',
+    'version': '19.0.1.0.0',
     'category': 'Accounting/Localizations',
     'summary': 'GİB UBL-TR 2.1 E-Fatura, E-Arşiv, E-SMM Entegrasyonu (Nilvera, Paraşüt, Uyumsoft). Odoo.sh, On-Premise ve Odoo Online uyumlu.',
     'description': """
@@ -42,7 +42,9 @@ Desteklenen Entegratörler:
         'wizard/fetch_invoices_wizard_views.xml',
         'views/menu_views.xml',
     ],
-    'installable': True,
-    'application': True,
+    # Bu modül Odoo 19'da kurulmuyor ve yerini addons/sd_edonusum_tr aldı.
+    # Ayrıntı ve geçiş notları: addons/e_donusum_turkiye/DEPRECATED.md
+    'installable': False,
+    'application': False,
     'auto_install': False,
 }

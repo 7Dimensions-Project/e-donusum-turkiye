@@ -223,6 +223,16 @@ def main(argv: list[str]) -> int:
 
     total = 0
     for module in modules:
+        # Kurulamaz işaretli modüller denetlenmez: kasıtlı olarak emekliye ayrılmışlardır.
+        # Biri yeniden `installable: True` yaparsa bulgular otomatik geri döner.
+        manifest = module / "__manifest__.py"
+        if manifest.is_file():
+            try:
+                if ast.literal_eval(manifest.read_text(encoding="utf-8")).get("installable", True) is False:
+                    print(f"\n== {module}  →  atlandı (installable: False)")
+                    continue
+            except (SyntaxError, ValueError):
+                pass
         issues = check_module(module)
         status = f"{len(issues)} bulgu" if issues else "temiz"
         print(f"\n== {module}  →  {status}")
