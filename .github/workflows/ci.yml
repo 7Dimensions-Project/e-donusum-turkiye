@@ -53,10 +53,14 @@ jobs:
       - name: odoo:19.0 imajını çek
         run: docker pull --quiet odoo:19.0
 
+      # odoo imajının entrypoint'i HOST/USER/PASSWORD ortam değişkenlerinden veritabanı
+      # argümanlarını üretir ve komutun SONUNA ekler; bu yüzden --db_host bayrağı ezilir.
+      # Bağlantı bilgileri env ile verilmeli.
       - name: Modülü kur ve testleri çalıştır
         run: |
           set -o pipefail
           docker run --rm --network host \
+            -e HOST=127.0.0.1 -e PORT=5432 -e USER=odoo -e PASSWORD=odoo \
             -v "$PWD/addons:/mnt/extra-addons/addons:ro" \
             odoo:19.0 \
             odoo -d ci -i sd_edonusum_tr \
@@ -64,7 +68,6 @@ jobs:
               --test-enable --test-tags /sd_edonusum_tr \
               --stop-after-init --workers=0 --log-level=test \
               --data-dir=/tmp/odoo \
-              --db_host=127.0.0.1 --db_user=odoo --db_password=odoo \
             2>&1 | tee odoo-test.log
 
       - name: Test özeti
@@ -90,7 +93,6 @@ jobs:
   legacy:
     name: Eski modül durumu (bilgi amaçlı)
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
@@ -99,6 +101,13 @@ jobs:
           python-version: "3.12"
 
       # addons/e_donusum_turkiye şu an Odoo 19'da kurulmuyor (res.groups.category_id,
-      # view_mode="tree" vb.). Bu iş bilinçli olarak bloke etmez; durumu görünür tutar.
-      - name: Odoo 19 uyumluluk denetimi
-        run: python tools/check_odoo19.py addons/e_donusum_turkiye
+      # view_mode="tree" vb.). Bu iş bilinçli olarak PR'ı bloke etmez; bulguları
+      # iş özetine yazar ki durum görünür kalsın.
+      - name: Odoo 19 uyumluluk denetimi (raporlayıcı)
+        run: |
+          {
+            echo "### Eski modül: addons/e_donusum_turkiye"
+            echo '```'
+            python tools/check_odoo19.py addons/e_donusum_turkiye || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
