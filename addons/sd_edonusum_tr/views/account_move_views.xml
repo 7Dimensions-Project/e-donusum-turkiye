@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_move_form_inherit_sd_edonusum" model="ir.ui.view">
+        <field name="name">account.move.form.sd.edonusum</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_sd_answer_accept" type="object" string="GİB: Kabul Et"
+                        class="btn-success" invisible="not sd_can_answer"
+                        groups="sd_edonusum_tr.group_sd_edonusum_user"
+                        confirm="Fatura GİB üzerinden KABUL edilecek. Bu işlem geri alınamaz. Onaylıyor musunuz?"/>
+                <button name="action_sd_answer_reject" type="object" string="GİB: Reddet"
+                        class="btn-danger" invisible="not sd_can_answer"
+                        groups="sd_edonusum_tr.group_sd_edonusum_user"/>
+            </xpath>
+
+            <xpath expr="//div[hasclass('oe_title')]" position="before">
+                <div class="alert alert-warning mb-2" role="alert"
+                     invisible="sd_answer_status != 'pending' or sd_answer_days_left &gt; 3">
+                    <i class="fa fa-exclamation-triangle me-2"/>
+                    Bu ticari faturaya itiraz süresi doluyor:
+                    <field name="sd_answer_deadline" class="oe_inline" readonly="1"/>
+                    (<field name="sd_answer_days_left" class="oe_inline" readonly="1"/> gün kaldı)
+                </div>
+            </xpath>
+
+            <xpath expr="//notebook" position="inside">
+                <page string="E-Dönüşüm Yanıtı" name="sd_edonusum"
+                      invisible="sd_answer_status == 'not_applicable'">
+                    <group>
+                        <group string="GİB Uygulama Yanıtı">
+                            <field name="sd_answer_status" widget="badge"
+                                   decoration-success="sd_answer_status in ('accepted', 'auto_accepted')"
+                                   decoration-warning="sd_answer_status == 'pending'"
+                                   decoration-danger="sd_answer_status in ('rejected', 'cancelled')"/>
+                            <field name="sd_gib_profile"/>
+                            <field name="sd_answer_deadline"/>
+                            <field name="sd_answer_days_left" invisible="sd_answer_status != 'pending'"/>
+                        </group>
+                        <group string="Detay">
+                            <field name="sd_answer_date"/>
+                            <field name="sd_answer_note"/>
+                            <field name="sd_can_answer" invisible="1"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_invoice_list_inherit_sd_edonusum" model="ir.ui.view">
+        <field name="name">account.move.list.sd.edonusum</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_invoice_tree"/>
+        <field name="arch" type="xml">
+            <field name="status_in_payment" position="before">
+                <field name="sd_answer_status" string="GİB Yanıtı" widget="badge" optional="hide"
+                       decoration-success="sd_answer_status in ('accepted', 'auto_accepted')"
+                       decoration-warning="sd_answer_status == 'pending'"
+                       decoration-danger="sd_answer_status in ('rejected', 'cancelled')"/>
+                <field name="sd_answer_deadline" string="İtiraz Son Tarih" optional="hide"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="sd_edonusum_pending_answer_action" model="ir.actions.act_window">
+        <field name="name">Yanıt Bekleyen Faturalar</field>
+        <field name="res_model">account.move</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('sd_answer_status', '=', 'pending')]</field>
+        <field name="context">{'search_default_posted': 1}</field>
+    </record>
+
+    <record id="sd_edonusum_answer_wizard_view_form" model="ir.ui.view">
+        <field name="name">sd.edonusum.answer.wizard.form</field>
+        <field name="model">sd.edonusum.answer.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Faturayı Reddet">
+                <group>
+                    <field name="move_id" readonly="1"/>
+                    <field name="reason" placeholder="Örn: Sipariş dışı kalem / hatalı tutar"/>
+                </group>
+                <footer>
+                    <button name="action_confirm_reject" type="object" string="RED Yanıtı Gönder"
+                            class="btn-danger"
+                            confirm="Fatura GİB üzerinden REDDEDİLECEK. Bu işlem geri alınamaz. Onaylıyor musunuz?"/>
+                    <button string="Vazgeç" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

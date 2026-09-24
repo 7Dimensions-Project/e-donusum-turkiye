@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="sd_edonusum_sync_log_view_list" model="ir.ui.view">
+        <field name="name">sd.edonusum.sync.log.list</field>
+        <field name="model">sd.edonusum.sync.log</field>
+        <field name="arch" type="xml">
+            <list default_order="create_date desc" create="false">
+                <field name="create_date" string="Zaman"/>
+                <field name="provider"/>
+                <field name="operation"/>
+                <field name="move_id"/>
+                <field name="document_uuid" optional="hide"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'success'"
+                       decoration-warning="state == 'retry'"
+                       decoration-danger="state == 'error'"/>
+                <field name="message"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="sd_edonusum_sync_log_view_search" model="ir.ui.view">
+        <field name="name">sd.edonusum.sync.log.search</field>
+        <field name="model">sd.edonusum.sync.log</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="document_uuid"/>
+                <field name="move_id"/>
+                <filter name="errors" string="Hatalar" domain="[('state', '=', 'error')]"/>
+                <filter name="retry" string="Yeniden Denenecek" domain="[('state', '=', 'retry')]"/>
+                <group expand="0" string="Grupla">
+                    <filter name="group_operation" string="İşlem" context="{'group_by': 'operation'}"/>
+                    <filter name="group_provider" string="Entegratör" context="{'group_by': 'provider'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="sd_edonusum_sync_log_action" model="ir.actions.act_window">
+        <field name="name">E-Dönüşüm Günlüğü</field>
+        <field name="res_model">sd.edonusum.sync.log</field>
+        <field name="view_mode">list</field>
+        <field name="context">{'search_default_errors': 1}</field>
+    </record>
+</odoo>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="sd_edonusum_backend_view_list" model="ir.ui.view">
+        <field name="name">sd.edonusum.backend.list</field>
+        <field name="model">sd.edonusum.backend</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="provider"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="use_test_env"/>
+                <field name="auto_accept_days"/>
+                <field name="auto_accept_enabled"/>
+                <field name="last_sync"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'ok'" decoration-danger="state == 'error'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="sd_edonusum_backend_view_form" model="ir.ui.view">
+        <field name="name">sd.edonusum.backend.form</field>
+        <field name="model">sd.edonusum.backend</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_test_connection" type="object" string="Bağlantıyı Test Et"
+                            class="btn-primary" icon="fa-plug"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,ok"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Bağlantı">
+                            <field name="provider"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="use_test_env" invisible="provider == 'nilvera'"/>
+                            <div colspan="2" class="text-muted" invisible="provider != 'nilvera'">
+                                Nilvera API anahtarı ve test ortamı ayarı Odoo'nun kendi
+                                <b>Muhasebe → Ayarlar → Türkiye - Nilvera</b> bölümünden yönetilir.
+                            </div>
+                            <field name="timeout"/>
+                            <field name="active" widget="boolean_toggle"/>
+                        </group>
+                        <group string="Uygulama Yanıtı (TTK m.21/2)">
+                            <field name="auto_accept_days"/>
+                            <field name="auto_accept_enabled"/>
+                            <field name="last_sync"/>
+                            <field name="state_message" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Paraşüt" name="parasut" invisible="provider != 'parasut'"
+                              groups="base.group_system">
+                            <group>
+                                <field name="parasut_company_id"/>
+                                <field name="parasut_client_id"/>
+                                <field name="parasut_client_secret" password="True"/>
+                                <field name="parasut_username"/>
+                                <field name="parasut_password" password="True"/>
+                            </group>
+                        </page>
+                        <page string="Uyumsoft" name="uyumsoft" invisible="provider != 'uyumsoft'"
+                              groups="base.group_system">
+                            <group>
+                                <field name="uyumsoft_username"/>
+                                <field name="uyumsoft_password" password="True"/>
+                                <field name="uyumsoft_endpoint" placeholder="Boş bırakılırsa varsayılan adres"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="sd_edonusum_backend_action" model="ir.actions.act_window">
+        <field name="name">E-Dönüşüm Entegratörleri</field>
+        <field name="res_model">sd.edonusum.backend</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Entegratör bağlantısı tanımlayın</p>
+            <p>Nilvera, Paraşüt veya Uyumsoft ile GİB uygulama yanıtı gönderebilmek için
+               şirket başına bir bağlantı tanımlayın.</p>
+        </field>
+    </record>
+</odoo>

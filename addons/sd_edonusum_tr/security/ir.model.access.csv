@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sd_edonusum_backend_user,sd.edonusum.backend user,model_sd_edonusum_backend,sd_edonusum_tr.group_sd_edonusum_user,1,0,0,0
+access_sd_edonusum_backend_manager,sd.edonusum.backend manager,model_sd_edonusum_backend,sd_edonusum_tr.group_sd_edonusum_manager,1,1,1,1
+access_sd_edonusum_sync_log_user,sd.edonusum.sync.log user,model_sd_edonusum_sync_log,sd_edonusum_tr.group_sd_edonusum_user,1,0,0,0
+access_sd_edonusum_sync_log_manager,sd.edonusum.sync.log manager,model_sd_edonusum_sync_log,sd_edonusum_tr.group_sd_edonusum_manager,1,1,1,1
+access_sd_edonusum_answer_wizard,sd.edonusum.answer.wizard,model_sd_edonusum_answer_wizard,sd_edonusum_tr.group_sd_edonusum_user,1,1,1,1
