@@ -1,7 +1,7 @@
+from lxml import etree
+
 from odoo.tests import TransactionCase, tagged
 from odoo.tools import file_open  # noqa: F401  (ileride örnek dosya okumak için)
-
-from lxml import etree
 
 UBL_WITH_CODES = """<?xml version="1.0" encoding="UTF-8"?>
 <Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
